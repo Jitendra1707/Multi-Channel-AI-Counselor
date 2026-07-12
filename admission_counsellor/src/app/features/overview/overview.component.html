@@ -1,0 +1,138 @@
+<div class="page page-grid">
+  <!-- Header / filter bar -->
+  <header class="ov-head">
+    <div>
+      <div class="row gap-2">
+        <div class="t-h2">Good morning, {{ auth.user().name.split(' ')[0] }}</div>
+        <span class="cnsl-pill" [attr.data-v]="counselor.active()">
+          <va-ai-avatar [size]="18" [variant]="counselor.active()"></va-ai-avatar>{{ counselor.activeMeta().name }} · {{ counselor.activeMeta().short }}
+        </span>
+      </div>
+      <p class="t-sm t-muted">Here’s how {{ career() ? 'career guidance' : 'admissions' }} is performing — <b>{{ auth.institution().name }}</b> · {{ auth.admissionCycle() }}</p>
+    </div>
+    <div class="ov-actions">
+      <div class="seg">
+        @for (r of ranges; track r.k) { <button [class.active]="range() === r.k" (click)="range.set(r.k)">{{ r.l }}</button> }
+      </div>
+      <button class="btn btn-ghost" (click)="export()"><va-icon name="download" [size]="16"></va-icon><span class="hide-xs">Export</span></button>
+      <button class="btn btn-ghost btn-icon" title="Customize widgets"><va-icon name="columns" [size]="16"></va-icon></button>
+    </div>
+  </header>
+
+  <!-- Knowledge-gap alert -->
+  <div class="banner ai gap-banner">
+    <va-icon name="brain" [size]="18"></va-icon>
+    <span>{{ gapText() }}</span>
+    <button class="btn btn-sm btn-primary" (click)="go('/app/learning-review')">Review gaps <va-icon name="arrow-right" [size]="14"></va-icon></button>
+  </div>
+
+  <!-- KPI row -->
+  <section class="kpis">
+    @for (m of kpis(); track m.key) { <va-metric-card [metric]="m" (drill)="drill($event)"></va-metric-card> }
+  </section>
+
+  <!-- Main + rail -->
+  <div class="ov-body">
+    <div class="ov-main">
+      <!-- Funnel -->
+      <va-section-card [title]="funnelTitle()" hint="Click any stage to view candidates">
+        <button actions class="btn btn-sm btn-ghost" (click)="go('/app/analytics')">Full analytics <va-icon name="arrow-up-right" [size]="14"></va-icon></button>
+        <va-funnel [stages]="funnel()" (stageClick)="drillStage($event)"></va-funnel>
+      </va-section-card>
+
+      <!-- 2x2 widget grid -->
+      <div class="widget-grid">
+        <va-section-card title="Lead-source performance">
+          <va-bar-list [data]="leadSources()"></va-bar-list>
+        </va-section-card>
+
+        <va-section-card [title]="demandTitle()">
+          <va-bar-list [data]="courseDemand()"></va-bar-list>
+        </va-section-card>
+
+        <va-section-card [title]="distTitle()">
+          <va-donut [data]="probabilityDist()" [centerLabel]="distCenter()"></va-donut>
+        </va-section-card>
+
+        <va-section-card title="Region-wise interest" hint="Heatmap by applicant volume">
+          <div class="heatmap">
+            @for (r of regions; track r.name) {
+              <div class="hcell" [attr.data-h]="heat(r.v)" [title]="r.name + ': ' + r.v + ' index'">
+                <span class="hname">{{ r.name }}</span>
+                <span class="hval t-num">{{ r.v }}</span>
+              </div>
+            }
+          </div>
+        </va-section-card>
+      </div>
+
+      <!-- AI insight cards -->
+      <va-section-card title="AI-narrated insights" hint="Generated from live data">
+        <span actions class="chip ai-chip"><va-icon name="sparkles" [size]="12"></va-icon> AI</span>
+        <div class="insights">
+          @for (i of insights(); track i.id) {
+            <div class="insight" [attr.data-tone]="i.tone">
+              <va-icon [name]="i.tone === 'warning' ? 'alert-triangle' : 'sparkles'" [size]="16"></va-icon>
+              <div><p>{{ i.narrative }}</p><span class="t-cap t-muted">{{ i.scope }}</span></div>
+            </div>
+          }
+        </div>
+      </va-section-card>
+    </div>
+
+    <!-- Right rail -->
+    <aside class="ov-rail">
+      <va-section-card title="Live activity" hint="Updated just now" [flush]="true">
+        <div class="activity scroll-y">
+          @for (a of activity(); track a.id) {
+            <div class="act">
+              <span class="act-ic" [attr.data-ch]="a.channel"><va-icon [name]="chIcon(a.channel)" [size]="14"></va-icon></span>
+              <div class="act-body">
+                <span class="act-text">{{ a.text }}</span>
+                <span class="act-meta t-cap t-muted">{{ a.candidate }} · {{ relTime(a.ts) }} · <span class="ai-tag">{{ a.actor === 'ai' ? 'AI' : 'Human' }}</span></span>
+              </div>
+            </div>
+          }
+        </div>
+      </va-section-card>
+
+      <va-section-card title="Pending human handoffs">
+        <button actions class="btn btn-sm btn-ghost" (click)="go('/app/handoff')">All</button>
+        <div class="mini-list">
+          @for (h of handoffs(); track h.escalationId) {
+            <button class="mini" [class.distress]="h.distress" (click)="go('/app/handoff')">
+              <span class="mini-l">
+                <span class="mini-t">{{ h.candidateName }}</span>
+                <span class="t-cap t-muted">{{ h.reason }}</span>
+              </span>
+              <span class="urg" [attr.data-u]="h.urgency">{{ h.urgency }}</span>
+            </button>
+          }
+        </div>
+      </va-section-card>
+
+      <va-section-card title="Upcoming V-Cons">
+        <div class="mini-list">
+          @for (c of upcomingVcons(); track c.candidateId) {
+            <button class="mini" (click)="go('/app/crm/candidate/' + c.candidateId)">
+              <span class="mini-l"><span class="mini-t">{{ c.name }}</span><span class="t-cap t-muted">{{ c.preferredCourse }}</span></span>
+              <va-icon name="video" [size]="16"></va-icon>
+            </button>
+          } @empty { <p class="t-sm t-muted center pad">No V-Cons scheduled.</p> }
+        </div>
+      </va-section-card>
+
+      <va-section-card title="Reference leaderboard">
+        <div class="lead-list">
+          @for (r of references(); track r.providerId; let i = $index) {
+            <div class="lead">
+              <span class="rank">{{ i + 1 }}</span>
+              <span class="lead-name truncate">{{ r.name }}</span>
+              <span class="lead-conv t-num">{{ r.conversionPct }}%</span>
+            </div>
+          }
+        </div>
+      </va-section-card>
+    </aside>
+  </div>
+</div>

@@ -1,0 +1,30 @@
+{
+  "document_link": {
+    "name": "general_document_template",
+    "languages": { "en": "en"},
+    "params": ["first_name", "url"],
+    "header": "document",
+    "description": "Out-of-window document/resource send. DOCUMENT header carries the file link; body has {{1}} first name, {{2}} link. The 'url' param doubles as the header document attachment. Referenced by documents.json entries via template_key."
+  },
+  "outreach": {
+    "name": "general_template",
+    "languages": { "en": "en" },
+    "params": ["first_name", "message"],
+    "header": "none",
+    "description": "Generic re-engagement / initiation template. Body: 'Hi {{1}}, this is Sreenidhi University Admissions. {{2}} If you have any questions, just reply to this message and we'll be happy to help.' {{1}} = first name, {{2}} = a context line (e.g. 'We tried calling you about your application.'). Used to reach a candidate who missed a call or to start a WhatsApp thread cold."
+  },
+  "admission_entrance_exam": {
+    "name": "REPLACE_WITH_APPROVED_admission_entrance_exam",
+    "languages": { "en": "en" },
+    "params": ["first_name", "message"],
+    "header": "none",
+    "description": "Post-payment next steps for a course that HAS an entrance exam. Body: 'Hi {{1}}, congratulations on completing your application and payment! {{2}}' — {{2}} carries the exam phases + slot-booking line/link. Set `name` to the approved Meta template name to enable out-of-window sends; until then the send falls back to in-window free-form text."
+  },
+  "admission_token_payment": {
+    "name": "REPLACE_WITH_APPROVED_admission_token_payment",
+    "languages": { "en": "en" },
+    "params": ["first_name", "message"],
+    "header": "none",
+    "description": "Post-payment next steps for a course with NO entrance exam. Body: 'Hi {{1}}, congratulations on completing your application and payment! {{2}}' — {{2}} carries the token-amount payment line/link to confirm the admission booking. Set `name` to the approved Meta template name to enable out-of-window sends; until then the send falls back to in-window free-form text."
+  }
+}

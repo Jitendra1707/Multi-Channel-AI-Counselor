@@ -1,0 +1,92 @@
+# Avatar video channel — Simli avatar over SmallWebRTC (aiortc, all platforms).
+#
+# IMPORTANT: we deliberately do NOT use the pipecat `[simli]` extra. That extra
+# hard-pins `simli-ai~=0.1.10`, whose WebSocket protocol (/StartWebRTCSession) was
+# RETIRED by Simli — every connection now returns HTTP 403 (verified by probing
+# every endpoint/auth variant against api.simli.ai). The live servers only serve
+# the 2.0.x protocol (/compose/token + /compose/webrtc/p2p with x-simli-api-key).
+#
+# So we install simli-ai 2.0.x DIRECTLY (below) and drive it with our own
+# AgentSimliVideoService (channels/avatar_video/processors/simli_service.py),
+# which replicates pipecat's SimliVideoService FrameProcessor interface on the
+# 2.0.x client: SimliClient(api_key=..., config=SimliConfig(faceId=...));
+# client.start(); client.sendImmediate(). pipecat's own SimliVideoService is never imported.
+#
+# [webrtc] → SmallWebRTCTransport (browser↔backend WebRTC). Pulls aiortc + cv2.
+# [livekit] → LiveKitTransport (the meeting channel's room transport). Pulls the
+#             livekit / livekit-api SDK that pipecat.transports.livekit imports.
+pipecat-ai[silero,deepgram,elevenlabs,sarvam,websocket,azure,webrtc,livekit]==0.0.89
+
+# Simli 2.0.x avatar client (installed directly, NOT via pipecat[simli]).
+simli-ai==2.0.2
+# cv2 dependency for SmallWebRTC.
+opencv-python-headless>=4.10
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pydantic>=2.9
+pydantic-settings>=2.6
+python-dotenv>=1.0
+deepgram-sdk>=3.10,<5
+aiofiles>=24.1,<25
+openai>=1.74,<2
+loguru>=0.7
+structlog>=24.0
+httpx>=0.27
+azure-storage-blob>=12.20
+langgraph>=0.2,<0.3
+langchain-openai>=0.2,<0.3
+langchain-core>=0.3,<1
+
+# Voice / counselor channel — telephony provider SDKs. Each is lazy-imported
+# inside its provider module, so installing only the one you test is fine.
+# Default: ACS (Azure Communication Services).
+azure-communication-callautomation>=1.3
+# twilio>=9.4
+# Plivo voice provider (VOICE_PROVIDER=plivo). Lazy-imported in
+# providers/plivo.py, so it's only needed when you actually select Plivo.
+plivo>=4.57
+
+# WhatsApp channel — ACS Advanced Messaging (BSP in front of Meta). Lazy-
+# imported inside channels/whatsapp/client.py, so the channel mounts cleanly
+# even before this is installed (outbound just logs a clear error).
+azure-communication-messages>=1.0.0
+
+# RAG — Qdrant hybrid retrieval (dense + sparse). Both lazy-imported in
+# rag/qdrant_store.py.
+#   qdrant-client : the Qdrant client (hybrid query: dense + sparse, RRF fusion).
+#   fastembed     : the SPARSE side only (Qdrant/bm25 keyword vectors), used to
+#                   embed the query's sparse vector. Tiny, CPU, downloads a small
+#                   BM25 vectorizer on first use. The DENSE side is OpenAI
+#                   text-embedding-3-large (via the openai package above).
+#                   The model is warmed at server boot (main.py lifespan →
+#                   rag.retriever.warmup_rag) and cached at FASTEMBED_CACHE_PATH.
+#                   DOCKER IMAGE OWNERS: bake the model into the image so
+#                   air-gapped pods never download at runtime:
+#                     ENV FASTEMBED_CACHE_PATH=/app/.fastembed_cache
+#                     RUN python -c "from fastembed import SparseTextEmbedding; SparseTextEmbedding('Qdrant/bm25', cache_dir='/app/.fastembed_cache')"
+qdrant-client>=1.12
+fastembed>=0.3
+# RAG INGESTION (rag/ingestion). Lazy-imported in the ingestion pipeline, so the
+# query path doesn't require them.
+#   tiktoken    : token-based chunking (already a dep above for other uses).
+#   pypdf       : local PDF text extraction (fallback parser, no API key needed).
+#   llama-cloud : LlamaParse v2 SDK (default PDF parser; needs LLAMA_CLOUD_API_KEY).
+pypdf>=4.0
+llama-cloud>=2.1
+# Multipart form parsing for the FastAPI upload route (POST /api/resources).
+python-multipart>=0.0.9
+# LLM OBSERVABILITY (Langfuse v3). Attached as a LangChain callback handler at
+# the agent invoke sites (infra/tracing.py) — traces every turn's
+# LLM/tool/token/cost. Optional at runtime: with no LANGFUSE_* keys set, tracing
+# is a clean no-op, so this import is only exercised when tracing is enabled.
+#   langchain : langfuse's langchain integration does a top-level `import
+#               langchain` as a version probe (real imports are from
+#               langchain_core, which we already have) — so the umbrella pkg is
+#               required even though we don't use it directly.
+langfuse>=3,<4
+langchain>=0.3,<0.4
+# Campus-visit pass QR code. Pure-Python QR generator; renders to a PNG via
+# Pillow (already pulled in transitively by opencv/pipecat). Lazy-imported in
+# channels/email/qr.py, so the email channel mounts cleanly even if it's not
+# installed (the QR is simply omitted, never a crash).
+qrcode[pil]>=7.4

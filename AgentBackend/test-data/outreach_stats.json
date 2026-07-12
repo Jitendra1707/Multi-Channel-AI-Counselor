@@ -1,0 +1,24 @@
+{
+  "default_period": "May",
+  "year": 2026,
+  "months": [
+    {
+      "key": "April",
+      "label": "April 2026",
+      "total_leads": 10,
+      "outreach_calls": 8,
+      "interested": 5,
+      "not_interested": 3,
+      "escalated_to_human_counsellor": 5
+    },
+    {
+      "key": "May",
+      "label": "May 2026",
+      "total_leads": 20,
+      "outreach_calls": 16,
+      "interested": 10,
+      "not_interested": 6,
+      "escalated_to_human_counsellor": 8
+    }
+  ]
+}

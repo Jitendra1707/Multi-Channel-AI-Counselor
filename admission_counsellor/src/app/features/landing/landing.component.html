@@ -1,0 +1,264 @@
+<div class="lp">
+  <!-- Top nav -->
+  <header class="nav">
+    <div class="nav-inner">
+      <va-logo [size]="22" [markSize]="32"></va-logo>
+      <nav class="nav-links">
+        <a href="#counselors">Counselors</a>
+        <a href="#platform">Platform</a>
+        <a href="#solutions">Solutions</a>
+        <a href="#security">Security</a>
+        <a href="#how">How it works</a>
+      </nav>
+      <div class="nav-cta">
+        <a routerLink="/login" class="btn btn-ghost">Sign in</a>
+        <a routerLink="/request-demo" class="btn btn-primary">Request demo</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <span class="pill-ai"><va-icon name="sparkles" [size]="14"></va-icon> Two AI Virtual Humanoids · institution-controlled</span>
+        <h1 class="t-display">AI Virtual Counselors that <span class="grad">guide, engage, and convert</span> students at scale.</h1>
+        <p class="lead">The platform gives institutions two AI Virtual Humanoid counselors: an <b>Admission Counselor</b> and a <b>Career Counselor</b>. Run one or both to counsel candidates, engage parents and improve outcomes, speaking only from the knowledge your institution has approved.</p>
+        <div class="hero-actions">
+          <a routerLink="/request-demo" class="btn btn-primary btn-lg"><va-icon name="rocket" [size]="18"></va-icon> Request a demo</a>
+          <a routerLink="/app/overview" class="btn btn-ghost btn-lg"><va-icon name="play" [size]="16"></va-icon> Explore the platform</a>
+        </div>
+        <div class="hero-proof">
+          @for (m of proofMetrics; track m.label) {
+            <div class="proof"><span class="pv t-num">{{ m.value }}</span><span class="pl">{{ m.label }}</span></div>
+          }
+        </div>
+      </div>
+
+      <!-- Hero visual: AI avatar + dashboard preview + channel orbit -->
+      <div class="hero-visual" aria-hidden="true">
+        <div class="orbit">
+          <div class="orbit-ring r1"></div>
+          <div class="orbit-ring r2"></div>
+          @for (c of channels; track c.label; let i = $index) {
+            <span class="node" [style.--i]="i" [style.--n]="channels.length" [style.color]="c.color">
+              <va-icon [name]="c.icon" [size]="18"></va-icon>
+            </span>
+          }
+          <div class="avatar-core"><va-ai-avatar [size]="92" [glow]="true"></va-ai-avatar></div>
+        </div>
+
+        <div class="dash-card float-a">
+          <div class="dc-row"><span class="dc-dot live pulse"></span><span class="t-cap">Counselor live · Voice · WhatsApp</span></div>
+          <div class="dc-bars"><span style="height:40%"></span><span style="height:70%"></span><span style="height:55%"></span><span style="height:88%"></span><span style="height:64%"></span></div>
+          <div class="t-cap t-muted">Conversion funnel · Fall 2026</div>
+        </div>
+        <div class="dash-card chat float-b">
+          <div class="cb ai"><va-ai-avatar [size]="22"></va-ai-avatar><span>“I’m Aisha, an AI counselor for Northgate. Shall we explore your study options?”</span></div>
+          <div class="cb me"><span>What scholarships are available?</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trusted by -->
+  <section class="trusted">
+    <span class="t-cap t-muted">Built for admission and career teams across every kind of institution</span>
+    <div class="logos">
+      <span>Universities</span><span>Colleges</span><span>UpSkilling Center of Excellence</span><span>Private Coaching Centres</span><span>Schools</span>
+    </div>
+  </section>
+
+  <!-- Responsible-AI band -->
+  <section class="band" vaReveal>
+    <va-icon name="shield-check" [size]="22"></va-icon>
+    <p>Admission Counsellor speaks only from the knowledge your institution has approved. <strong>Never a word more.</strong></p>
+  </section>
+
+  <!-- Two AI Virtual Humanoids -->
+  <section class="humanoids-sec" id="counselors">
+    <div class="sec-head" vaReveal>
+      <span class="kicker">Two AI Virtual Humanoids</span>
+      <h2 class="t-h1">Choose your counselor, or run both</h2>
+      <p class="t-muted">Every institution is different. Enable the Admission Counselor, the Career Counselor, or both. Each comes with its own workbench, dashboards, analytics and reports.</p>
+    </div>
+    <div class="humanoid-grid">
+      @for (h of humanoids; track h.name; let i = $index) {
+        <article class="humanoid" [attr.data-v]="h.variant" vaReveal="{{ i * 90 }}">
+          <div class="humanoid-top">
+            <va-ai-avatar [size]="64" [glow]="true" [variant]="h.variant"></va-ai-avatar>
+            <div class="humanoid-id">
+              <span class="humanoid-name">{{ h.name }}</span>
+              <span class="humanoid-title">{{ h.title }}</span>
+            </div>
+          </div>
+          <p class="humanoid-blurb">{{ h.blurb }}</p>
+          <ul class="humanoid-points">
+            @for (p of h.points; track p) { <li><va-icon name="check" [size]="15"></va-icon>{{ p }}</li> }
+          </ul>
+          <div class="humanoid-foot">
+            <span class="chip"><va-icon name="shield-check" [size]="12"></va-icon> Approved-knowledge only</span>
+            <span class="chip"><va-icon name="bot" [size]="12"></va-icon> Always discloses it’s AI</span>
+          </div>
+        </article>
+      }
+    </div>
+    <div class="humanoid-cta" vaReveal>
+      <span class="t-sm t-muted">Mix and match per campus or department. Your institution stays in control of what each counselor can say.</span>
+      <a routerLink="/request-demo" class="btn btn-primary"><va-icon name="rocket" [size]="16"></va-icon> See both in a demo</a>
+    </div>
+  </section>
+
+  <!-- Problem → Solution -->
+  <section class="ps" id="solutions">
+    <div class="ps-grid">
+      <div class="ps-col problem" vaReveal>
+        <span class="ps-label">The problem</span>
+        <h2 class="t-h2">Slow follow-up. Inconsistent messaging. An opaque pipeline.</h2>
+        <ul>
+          <li><va-icon name="x" [size]="16"></va-icon> Leads wait days for a first contact, and many never hear back.</li>
+          <li><va-icon name="x" [size]="16"></va-icon> Counselors improvise answers on fees, scholarships and placements.</li>
+          <li><va-icon name="x" [size]="16"></va-icon> Leadership can’t see the funnel, demand, or what’s being said in their name.</li>
+        </ul>
+      </div>
+      <div class="ps-col solution" vaReveal="120">
+        <span class="ps-label">With Admission Counsellor</span>
+        <h2 class="t-h2">Instant coverage. Governed truth. Live intelligence.</h2>
+        <ul>
+          <li><va-icon name="check" [size]="16"></va-icon> Every lead contacted, every question answered from approved knowledge.</li>
+          <li><va-icon name="check" [size]="16"></va-icon> The AI cannot exceed approved knowledge or guardrails, and every word is logged.</li>
+          <li><va-icon name="check" [size]="16"></va-icon> Real-time funnel, sentiment and AI/human performance, with AI-narrated reports.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feature grid -->
+  <section class="features" id="platform">
+    <div class="sec-head" vaReveal>
+      <span class="kicker">One governed platform</span>
+      <h2 class="t-h1">Everything both counselors need, in one place</h2>
+      <p class="t-muted">Dozens of modules span acquisition, communication, knowledge, governance and intelligence. Here are the ones your team will feel from day one.</p>
+    </div>
+    <div class="feat-grid">
+      @for (f of features; track f.title; let i = $index) {
+        <article class="feat" vaReveal="{{ (i % 4) * 70 }}">
+          <span class="feat-ic"><va-icon [name]="f.icon" [size]="22"></va-icon></span>
+          <div class="feat-top">
+            <h3 class="t-h4">{{ f.title }}</h3>
+            @if (f.tag) { <span class="feat-tag">{{ f.tag }}</span> }
+          </div>
+          <p class="t-sm t-muted">{{ f.body }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how" id="how">
+    <div class="sec-head" vaReveal>
+      <span class="kicker">How it works</span>
+      <h2 class="t-h1">Two journeys, one governed platform</h2>
+      <p class="t-muted">Aisha runs your admissions funnel and Vera guides students into careers. Both follow the same governed loop, so every word stays on approved knowledge.</p>
+    </div>
+
+    @for (j of journeys; track j.counselor) {
+      <div class="journey" [attr.data-v]="j.variant" vaReveal>
+        <div class="journey-head">
+          <va-ai-avatar [size]="44" [glow]="true" [variant]="j.variant"></va-ai-avatar>
+          <div class="journey-id">
+            <span class="journey-kicker">{{ j.kicker }}</span>
+            <h3 class="journey-title">{{ j.title }}</h3>
+            <span class="journey-sub t-sm t-muted">{{ j.sub }}</span>
+          </div>
+        </div>
+        <div class="steps">
+          @for (s of j.steps; track s.n) {
+            <div class="step" [attr.data-v]="j.variant" vaReveal="{{ s.n * 70 }}">
+              <span class="step-n">{{ s.n }}</span>
+              <span class="step-ic"><va-icon [name]="s.icon" [size]="22"></va-icon></span>
+              <h4 class="t-h4">{{ s.title }}</h4>
+              <p class="t-sm t-muted">{{ s.body }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- Security & compliance -->
+  <section class="security" id="security" vaReveal>
+    <div class="sec-grid">
+      <div class="sec-left">
+        <span class="kicker">Security & compliance</span>
+        <h2 class="t-h1">Enterprise-grade, privacy-first, and accountable by design</h2>
+        <p class="t-muted">Every interaction is logged and auditable. Consent is captured at import and honored everywhere. The AI always discloses its identity, with no deceptive avatars, ever.</p>
+        <a routerLink="/request-demo" class="btn btn-primary"><va-icon name="lock" [size]="16"></va-icon> Talk to security</a>
+      </div>
+      <div class="sec-list">
+        @for (s of security; track s) { <div class="sec-item"><va-icon name="shield-check" [size]="16"></va-icon>{{ s }}</div> }
+      </div>
+    </div>
+  </section>
+
+  <!-- Integrations -->
+  <section class="integrations" vaReveal>
+    <h2 class="t-h3">Connects to the tools you already run</h2>
+    <div class="int-chips">@for (i of integrations; track i) { <span class="int-chip"><va-icon name="plug" [size]="14"></va-icon>{{ i }}</span> }</div>
+  </section>
+
+  <!-- Use cases -->
+  <section class="usecases">
+    <div class="sec-head" vaReveal><span class="kicker">Who it’s for</span><h2 class="t-h1">One platform, many institutions</h2></div>
+    <div class="uc-grid">
+      @for (u of useCases; track u.title; let i = $index) {
+        <article class="uc" vaReveal="{{ i * 70 }}">
+          <span class="uc-ic"><va-icon [name]="u.icon" [size]="20"></va-icon></span>
+          <h3 class="t-h4">{{ u.title }}</h3>
+          <p class="t-sm t-muted">{{ u.body }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="cta" vaReveal>
+    <div class="cta-card">
+      <va-ai-avatar [size]="56" [glow]="true"></va-ai-avatar>
+      <h2 class="t-h1">See a Admission Counsellor counselor in action, live.</h2>
+      <p class="t-muted">An Admission Counsellor specialist will walk your team through the workbench using your own admission or career scenario.</p>
+      <div class="cta-actions">
+        <a routerLink="/request-demo" class="btn btn-accent btn-lg"><va-icon name="rocket" [size]="18"></va-icon> Request a demo</a>
+        <a routerLink="/app/overview" class="btn btn-ghost btn-lg">Explore the platform</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="foot-inner">
+      <div class="foot-brand">
+        <va-logo [size]="20" [markSize]="30"></va-logo>
+        <p class="t-sm t-muted">The AI platform for admission and career counseling. Virtual counselors, institutional knowledge, automation and analytics, delivered responsibly.</p>
+      </div>
+      <div class="foot-cols">
+        <div><h4>Platform</h4><a href="#platform">Modules</a><a href="#how">How it works</a><a href="#security">Security</a></div>
+        <div><h4>Solutions</h4><a href="#solutions">Universities</a><a href="#solutions">Colleges</a><a href="#solutions">EdTech</a></div>
+        <div><h4>Company</h4><a routerLink="/request-demo">Request demo</a><a routerLink="/login">Sign in</a><a href="#">Contact</a></div>
+      </div>
+    </div>
+    <div class="foot-bar">
+      <span class="t-cap t-muted">© {{ year }} Admission Counsellor. All rights reserved.</span>
+      <span class="t-cap t-muted">Every AI counselor discloses its identity. Built on responsible AI principles.</span>
+    </div>
+  </footer>
+
+  <!-- Cookie/consent banner -->
+  <div class="consent" vaReveal>
+    <va-icon name="info" [size]="16"></va-icon>
+    <span class="t-sm">We use essential cookies to run Admission Counsellor and analytics to improve it. You’re in control.</span>
+    <button class="btn btn-sm btn-primary">Accept</button>
+    <button class="btn btn-sm btn-ghost">Manage</button>
+  </div>
+</div>

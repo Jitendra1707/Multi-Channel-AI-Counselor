@@ -1,0 +1,179 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Meeting stack — single Kubernetes manifest. Two services:
+#   meeting-svc  :8003  →  rameshrathlavath/aegis-meeting-svc:v2  (your image)
+#   livekit      :7880  →  livekit/livekit-server:latest          (public image)
+#
+# Exposed via ONE Ingress (TLS). Fill in: the 2 domains, the LiveKit key/secret
+# (same value in the Secret AND livekit-config), and the Azure Speech key.
+#
+#   kubectl apply -f deployment.yaml
+#   kubectl -n aegis-meeting get pods,svc,ingress
+#
+# LiveKit media (WebRTC/UDP) uses hostNetwork — put it on a node with a public IP
+# (label it: kubectl label node <node> aegis.livekit/public=true) and open the
+# node firewall: 7880/7881 tcp + 50000-60000/udp (+ TURN if you enable it).
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aegis-meeting
+---
+# ───────────────────────── meeting-svc (:8003) ─────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: meeting-svc-config
+  namespace: aegis-meeting
+data:
+  HOST: "0.0.0.0"
+  PORT: "8003"
+  LIVEKIT_PROVIDER: "selfhosted"
+  # In-cluster address of the livekit Service below (server-to-server).
+  LIVEKIT_URL: "ws://livekit.aegis-meeting.svc.cluster.local:7880"
+  MEETING_JOIN_BASE_URL: "https://app.example.com"   # ← your web-app public domain
+  TRANSCRIBE_AUTO_START: "true"
+  TRANSCRIPT_OUTPUT_DIR: "/app/transcripts"
+  AZURE_SPEECH_REGION: "centralindia"
+  AZURE_SPEECH_LANGUAGE: "en-IN"
+  LOG_LEVEL: "INFO"
+  LOG_PRETTY: "false"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: meeting-svc-secret
+  namespace: aegis-meeting
+type: Opaque
+stringData:
+  LIVEKIT_API_KEY: "devkey"            # ← must match livekit-config keys:
+  LIVEKIT_API_SECRET: "secret"         # ← must match livekit-config keys:
+  AZURE_SPEECH_KEY: "REPLACE_AZURE_SPEECH_KEY"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meeting-svc
+  namespace: aegis-meeting
+  labels: { app: meeting-svc }
+spec:
+  replicas: 1   # transcriber holds a per-meeting live conn in its pod; keep at 1
+  selector:
+    matchLabels: { app: meeting-svc }
+  template:
+    metadata:
+      labels: { app: meeting-svc }
+    spec:
+      containers:
+        - name: meeting-svc
+          image: rameshrathlavath/aegis-meeting-svc:v2
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8003 }]
+          envFrom:
+            - configMapRef: { name: meeting-svc-config }
+            - secretRef:    { name: meeting-svc-secret }
+          readinessProbe:
+            httpGet: { path: /health, port: 8003 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "100m", memory: "256Mi" }
+            limits:   { cpu: "1",    memory: "1Gi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meeting-svc
+  namespace: aegis-meeting
+spec:
+  selector: { app: meeting-svc }
+  ports: [{ name: http, port: 80, targetPort: 8003 }]
+---
+# ───────────────────────── livekit SFU (:7880) ─────────────────────────────────
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: livekit-config
+  namespace: aegis-meeting
+data:
+  livekit.yaml: |
+    port: 7880
+    rtc:
+      tcp_port: 7881
+      port_range_start: 50000
+      port_range_end: 60000
+      use_external_ip: true        # required on a NATed cloud node
+    keys:
+      devkey: secret               # ← must match meeting-svc-secret
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit
+  namespace: aegis-meeting
+  labels: { app: livekit }
+spec:
+  replicas: 1                      # hostNetwork → one per node
+  selector:
+    matchLabels: { app: livekit }
+  template:
+    metadata:
+      labels: { app: livekit }
+    spec:
+      hostNetwork: true            # WebRTC media (UDP) needs the node's real ports
+      dnsPolicy: ClusterFirstWithHostNet
+      nodeSelector:
+        aegis.livekit/public: "true"   # label a public-IP node with this
+      containers:
+        - name: livekit
+          image: livekit/livekit-server:latest
+          args: ["--config", "/etc/livekit/livekit.yaml"]
+          ports:
+            - { name: signal,  containerPort: 7880, protocol: TCP }
+            - { name: rtc-tcp, containerPort: 7881, protocol: TCP }
+          volumeMounts:
+            - { name: config, mountPath: /etc/livekit }
+          readinessProbe:
+            httpGet: { path: /, port: 7880 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests: { cpu: "250m", memory: "256Mi" }
+            limits:   { cpu: "2",    memory: "1Gi" }
+      volumes:
+        - name: config
+          configMap: { name: livekit-config }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit
+  namespace: aegis-meeting
+spec:
+  selector: { app: livekit }
+  ports: [{ name: signal, port: 7880, targetPort: 7880 }]   # signal only; media = node IP
+---
+# ───────────────────────────── Ingress (TLS) ───────────────────────────────────
+# One Ingress, two hosts. Needs an ingress controller (nginx) + cert-manager.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: meeting-stack
+  namespace: aegis-meeting
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"       # ← your issuer (or remove)
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"   # LiveKit WS is long-lived
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: ["meet-api.example.com", "lk.example.com"]
+      secretName: meeting-stack-tls
+  rules:
+    - host: meet-api.example.com    # → meeting-svc (rooms/tokens)
+      http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: meeting-svc, port: { number: 80 } } } }
+    - host: lk.example.com          # → LiveKit signal (wss)
+      http:
+        paths:
+          - { path: /, pathType: Prefix, backend: { service: { name: livekit, port: { number: 7880 } } } }

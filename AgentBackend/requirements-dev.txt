@@ -1,0 +1,12 @@
+# AgentBackend dev requirements (tests, linting, type-checking).
+# Mirrors [project.optional-dependencies].dev in pyproject.toml.
+#
+# Install (includes runtime deps via -r):
+#   pip install -r requirements-dev.txt
+
+-r requirements.txt
+
+pytest>=8.0
+pytest-asyncio>=0.23
+ruff>=0.6
+mypy>=1.10

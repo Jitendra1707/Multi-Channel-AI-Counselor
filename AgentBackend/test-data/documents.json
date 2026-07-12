@@ -1,0 +1,23 @@
+{
+  "program_brochure": {
+    "title": "Programme Brochure",
+    "url": "https://www.orimi.com/pdf-test.pdf",
+    "description": "Overview of all programmes, fees, campus life and placements.",
+    "keywords": ["brochure", "programme", "program", "prospectus", "course details", "courses"],
+    "template_key": "document_link"
+  },
+  "fee_scholarship": {
+    "title": "Fee & Scholarship Details",
+    "url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    "description": "Detailed fee structure and scholarship / merit criteria.",
+    "keywords": ["fee", "fees", "scholarship", "scholarships", "cost", "financial", "concession"],
+    "template_key": "document_link"
+  },
+  "application_guide": {
+    "title": "Application Guide",
+    "url": "https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf",
+    "description": "Step-by-step application process, documents required and deadlines.",
+    "keywords": ["application", "apply", "admission steps", "how to apply", "form"],
+    "template_key": "document_link"
+  }
+}

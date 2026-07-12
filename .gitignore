@@ -1,0 +1,67 @@
+# === Environment / secrets ===
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# === Python ===
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.fastembed/
+.fastembed_cache/
+*.egg-info/
+.eggs/
+*.db
+*.db-wal
+*.db-shm
+.ipynb_checkpoints/
+
+# === Node / Angular / frontend ===
+node_modules/
+dist/
+/tmp
+out-tsc/
+bazel-out/
+npm-debug.log*
+yarn-error.log*
+**/.angular/cache/
+.next/
+.nuxt/
+.sass-cache/
+connect.lock
+libpeerconnection.log
+testem.log
+typings/
+coverage/
+
+# === Logs ===
+logs/
+*.log
+
+# === IDEs and editors ===
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# === OS files ===
+.DS_Store
+Thumbs.db

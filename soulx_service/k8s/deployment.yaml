@@ -1,0 +1,150 @@
+# SoulX talking-head inference service — single-file manifest (AKS)
+# Image: docker.io/vaishnavineela/soulx-service:1 (baked weights, GPU).
+# An initContainer pulls face.jpg from Azure Blob into the /refs PVC before the server starts;
+# the server then reads face.jpg and writes its idle/thinking .pkl cache to the PVC (persists →
+# generated once, not on every restart).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: soulx
+---
+# Blob connection string used by the seed initContainer.
+# Prefer creating this imperatively so the real string never lands in git:
+#   kubectl -n soulx create secret generic soulx-blob --from-literal=connection-string='<CS>'
+# (If you create it that way, you can delete this Secret block.)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: soulx-blob
+  namespace: soulx
+type: Opaque
+stringData:
+  connection-string: "<AZURE_STORAGE_CONNECTION_STRING>"
+---
+# Dynamically provisioned PVC using the cluster's default StorageClass.
+# Holds face.jpg (seeded by the initContainer) + the idle/thinking .pkl cache (persists).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: soulx-refs
+  namespace: soulx
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: soulx-service
+  namespace: soulx
+  labels:
+    app: soulx-service
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: soulx-service
+  template:
+    metadata:
+      labels:
+        app: soulx-service
+    spec:
+      nodeSelector:
+        accelerator: nvidia
+      tolerations:
+        - key: sku
+          value: gpu
+          effect: NoSchedule
+      initContainers:
+        - name: seed-refs            # pull face.jpg (+ optional pre-generated caches) from the blob into /refs
+          image: mcr.microsoft.com/azure-cli:latest
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -e
+              dl() { az storage blob download --connection-string "$AZURE_STORAGE_CONNECTION_STRING" \
+                       -c "$BLOB_CONTAINER" -n "${BLOB_PREFIX}$1" -f "/refs/$1" --overwrite --no-progress; }
+              dl face.jpg                                          # required
+              dl idle_frames.pkl     || echo "no idle_frames.pkl in blob — server will generate"
+              dl thinking_frames.pkl || echo "no thinking_frames.pkl in blob — server will generate"
+          env:
+            - name: BLOB_CONTAINER
+              value: avatarheadpoc        # blob container holding face.jpg
+            - name: BLOB_PREFIX
+              value: ""                # path inside the container, e.g. "ramesh/"
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: soulx-blob
+                  key: connection-string
+          volumeMounts:
+            - name: refs
+              mountPath: /refs
+      containers:
+        - name: soulx
+          image: docker.io/vaishnavineela/soulx-service:4
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8011
+              name: ws
+          env:
+            # Worker processes packed onto the one H100 (one concurrent stream each).
+            # ~6.5 GB VRAM/worker, so VRAM is never the limit; COMPUTE is — K Lite
+            # inferences time-slice the GPU and must hold real-time 25 fps. Load-tested
+            # from a high-bandwidth client: real-time ceiling ≈ 9 (9 holds ratio 0.97,
+            # 10 dips to 0.88). Set to 10 for max capacity — the GPU runs at the redline
+            # and softens to ~0.88 only when ~all streams talk simultaneously (rare;
+            # real calls are bursty). Drop to 8 for ~20% headroom if peaks get choppy.
+            - name: SOULX_POOL_SIZE
+              value: "10"
+          resources:
+            requests:
+              # 10 workers + nginx + supervisor on the NC40ads_H100_v5 (40 vCPU, 320 GiB).
+              cpu: "10"
+              memory: 64Gi
+            limits:
+              nvidia.com/gpu: 1
+              memory: 96Gi
+          # Long cold start: each worker warms (~120s) AND the primary worker may
+          # generate the shared .pkl caches (~8 min) on a cold mount. Probe /health
+          # (nginx proxies it to a worker even while streams run) so the Service only
+          # routes once at least one worker is model-loaded.
+          # startupProbe:
+          #   httpGet: { path: /health, port: 8011 }
+          #   periodSeconds: 15
+          #   failureThreshold: 60        # up to 15 min for cold-start .pkl generation
+          # readinessProbe:
+          #   httpGet: { path: /health, port: 8011 }
+          #   periodSeconds: 10
+          volumeMounts:
+            - name: refs
+              mountPath: /refs
+      volumes:
+        - name: refs
+          persistentVolumeClaim:
+            claimName: soulx-refs
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: soulx-service
+  namespace: soulx
+  labels:
+    app: soulx-service
+spec:
+  type: LoadBalancer
+  # /ws has no auth — recommend restricting to the backend's egress IP:
+  # loadBalancerSourceRanges:
+  #   - <backend-egress-ip>/32
+  selector:
+    app: soulx-service
+  ports:
+    - name: ws
+      port: 8011
+      targetPort: 8011
+      protocol: TCP

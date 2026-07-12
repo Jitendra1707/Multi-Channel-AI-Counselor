@@ -1,0 +1,17 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+pydantic-settings>=2.2
+httpx>=0.27
+structlog>=24.1
+# LiveKit server SDK — room management, JWT minting, webhook verification.
+# Same library AegisBackend uses; pinned compatible with livekit-server v1.13.x.
+livekit-api>=1.0
+# LiveKit realtime SDK — the transcriber joins rooms as a subscribe-only
+# participant and pulls per-track audio (rtc.Room / rtc.AudioStream). Distinct
+# from livekit-api (control plane) — this is the media-receiving client.
+livekit>=1.0
+# Azure Speech streaming STT — turns each participant's PCM audio into text.
+# Reuses the same Azure Speech resource AegisBackend's phone calls use (no new
+# key); CPU-only, no GPU.
+azure-cognitiveservices-speech>=1.40

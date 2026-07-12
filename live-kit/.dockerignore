@@ -1,0 +1,14 @@
+# Keep the build context tiny + don't bake secrets/local state into the image.
+.env
+.venv
+venv
+__pycache__
+**/__pycache__
+*.pyc
+.pytest_cache
+transcripts
+.fastembed_cache
+README.md
+Dockerfile
+docker-compose.yaml
+.dockerignore
